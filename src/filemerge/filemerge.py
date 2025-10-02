@@ -141,7 +141,9 @@ def main():
 
     args = parser.parse_args()
 
-    render_templates(args.template, args.csvfile, args.output_dir, override_headers=args.headers, select_rows=args.select, no_headers=args.no_headers, file_template=args.file_template)
+    render_templates(args.template, args.csvfile, args.output_dir,
+                     override_headers=args.headers, select_rows=args.select,
+                     no_headers=args.no_headers, file_template=args.file_template)
 
 if __name__ == '__main__':
     main()

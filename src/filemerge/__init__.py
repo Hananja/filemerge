@@ -1,11 +1,10 @@
 """
-Filemerge - Seriendokumentgenerator für Jinja-Templates und CSV-Daten.
+Filemerge - Ein leistungsstarker Seriendokumentgenerator
+
+Kombiniert Jinja2-Templates mit CSV-Daten um automatisch mehrere Dokumente zu erstellen.
 """
 
+from .filemerge import main, render_templates, read_csv
+
 __version__ = "0.1.0"
-__author__ = "Your Name"
-__email__ = "your.email@example.com"
-
-from .main import main
-
-__all__ = ["main"]
+__all__ = ["main", "render_templates", "read_csv"]
