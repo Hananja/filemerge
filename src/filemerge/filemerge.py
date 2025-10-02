@@ -4,12 +4,12 @@ from jinja2 import Environment, FileSystemLoader, Template
 import os
 import re
 
-def read_csv(file_path, override_headers=None, select_rows=None, no_headers=False):
+def read_csv(file_path, override_headers=None, select_rows=None, no_headers=False, delimiter=','):
     with open(file_path, newline='', encoding='utf-8') as csvfile:
-        reader = list(csv.reader(csvfile))
+        reader = list(csv.reader(csvfile, delimiter=delimiter))
         if not reader:
             raise ValueError("CSV Datei ist leer")
-        
+
         if override_headers:
             headers = override_headers
             # Bei override_headers verwenden wir alle Zeilen als Daten
@@ -51,7 +51,7 @@ def sanitize_filename(filename):
         filename = 'unnamed'
     return filename
 
-def render_templates(template_path, csv_path, output_dir, override_headers=None, select_rows=None, no_headers=False, file_template=None):
+def render_templates(template_path, csv_path, output_dir, override_headers=None, select_rows=None, no_headers=False, file_template=None, delimiter=','):
     template_dir = os.path.dirname(template_path) or '.'
     template_file = os.path.basename(template_path)
 
@@ -63,13 +63,13 @@ def render_templates(template_path, csv_path, output_dir, override_headers=None,
     if file_template:
         filename_template = Template(file_template)
 
-    data = read_csv(csv_path, override_headers=override_headers, select_rows=select_rows, no_headers=no_headers)
+    data = read_csv(csv_path, override_headers=override_headers, select_rows=select_rows, no_headers=no_headers, delimiter=delimiter)
 
     os.makedirs(output_dir, exist_ok=True)
 
     for i, context in enumerate(data, 1):
         output_content = template.render(context)
-        
+
         # Dateinamen generieren
         if filename_template:
             try:
@@ -86,9 +86,9 @@ def render_templates(template_path, csv_path, output_dir, override_headers=None,
                 filename = f"output_{i}.txt"
         else:
             filename = f"output_{i}.txt"
-        
+
         output_file = os.path.join(output_dir, filename)
-        
+
         # Prüfe auf Dateinamenskonflikte und füge Suffix hinzu falls nötig
         counter = 1
         original_output_file = output_file
@@ -96,7 +96,7 @@ def render_templates(template_path, csv_path, output_dir, override_headers=None,
             name, ext = os.path.splitext(original_output_file)
             output_file = f"{name}_{counter}{ext}"
             counter += 1
-        
+
         with open(output_file, 'w', encoding='utf-8') as f:
             f.write(output_content)
         print(f"Datei erstellt: {output_file}")
@@ -138,12 +138,23 @@ def main():
     parser.add_argument('--select', type=parse_select_rows, help='Auswahl einzelner oder mehrerer Zeilen und Bereiche 1,3-5,7 (1-basierte Indizes)')
     parser.add_argument('-n', '--no-headers', action='store_true', help='CSV enthält keine Spaltenüberschriften; Daten beginnen ab der ersten Zeile')
     parser.add_argument('-t', '--file-template', help='Jinja-Template für Dateinamen, z.B. "{{ Name }}_{{ Datum }}.txt"')
+    parser.add_argument('-d', '--delimiter', default=',', help='CSV-Trennzeichen (Standard: Komma). Für Tab verwenden Sie "\\t"')
 
     args = parser.parse_args()
 
+    # Erlaube spezielle Zeichen-Notationen
+    delimiter = args.delimiter
+    if delimiter == '\\t':
+        delimiter = '\t'
+    elif delimiter == '\\n':
+        delimiter = '\n'
+    elif delimiter == '\\r':
+        delimiter = '\r'
+
     render_templates(args.template, args.csvfile, args.output_dir,
                      override_headers=args.headers, select_rows=args.select,
-                     no_headers=args.no_headers, file_template=args.file_template)
+                     no_headers=args.no_headers, file_template=args.file_template,
+                     delimiter=delimiter)
 
 if __name__ == '__main__':
     main()

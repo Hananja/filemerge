@@ -80,6 +80,20 @@ filemerge template.txt daten.csv output/ -t "{{ Kategorie }}/{{ Name }}.txt"
 ```bash
 filemerge template.txt daten.csv output/ -t "{{ UngueltigesSpalte }}.txt"
 ```
+# Standard CSV mit Komma
+filemerge template.txt data.csv output/
+
+# Semikolon-getrennte Datei (häufig in Europa)
+filemerge template.txt data.csv output/ -d ";"
+
+# Tab-getrennte Datei (TSV)
+filemerge template.txt data.tsv output/ --delimiter "\\t"
+
+# Pipe-getrennte Datei
+filemerge template.txt data.txt output/ -d "|"
+
+# Kombination mit anderen Optionen
+filemerge template.txt data.csv output/ -d ";" -t "{{ Name }}.html" --no-headers
 
 ### Template-Beispiel
 
