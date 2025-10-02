@@ -3,33 +3,50 @@ import csv
 from jinja2 import Environment, FileSystemLoader
 import os
 
-def read_csv(file_path, override_headers=None, select_rows=None):
+def read_csv(file_path, override_headers=None, select_rows=None, no_headers=False):
     with open(file_path, newline='', encoding='utf-8') as csvfile:
         reader = list(csv.reader(csvfile))
         if not reader:
             raise ValueError("CSV Datei ist leer")
+        
         if override_headers:
             headers = override_headers
+            # Bei override_headers verwenden wir alle Zeilen als Daten
+            if no_headers:
+                # Alle Zeilen sind Daten
+                data_rows = reader
+            else:
+                # Erste Zeile überspringen (normalerweise Header)
+                data_rows = reader[1:]
+        elif no_headers:
+            # Keine Header erwartet - generiere automatische Header (col_1, col_2, ...)
+            if not reader:
+                headers = []
+                data_rows = []
+            else:
+                headers = [f"col_{i+1}" for i in range(len(reader[0]))]
+                data_rows = reader  # Alle Zeilen sind Daten
         else:
+            # Standard: Erste Zeile als Header verwenden
             headers = reader[0]
-            reader = reader[1:]
+            data_rows = reader[1:]
 
         if select_rows:
-            selected = [reader[i] for i in select_rows if i < len(reader)]
+            selected = [data_rows[i] for i in select_rows if i < len(data_rows)]
         else:
-            selected = reader
+            selected = data_rows
 
         data = [{headers[j]: row[j] if j < len(row) else '' for j in range(len(headers))} for row in selected]
     return data
 
-def render_templates(template_path, csv_path, output_dir, override_headers=None, select_rows=None):
+def render_templates(template_path, csv_path, output_dir, override_headers=None, select_rows=None, no_headers=False):
     template_dir = os.path.dirname(template_path) or '.'
     template_file = os.path.basename(template_path)
 
     env = Environment(loader=FileSystemLoader(template_dir))
     template = env.get_template(template_file)
 
-    data = read_csv(csv_path, override_headers=override_headers, select_rows=select_rows)
+    data = read_csv(csv_path, override_headers=override_headers, select_rows=select_rows, no_headers=no_headers)
 
     os.makedirs(output_dir, exist_ok=True)
 
@@ -75,11 +92,11 @@ def main():
     parser.add_argument('output_dir', help='Ausgabeordner für generierte Dateien')
     parser.add_argument('--headers', type=parse_headers, help='Überschreibe CSV-Spaltenüberschriften; kommasepariert z.B. Name,Adresse,Telefon')
     parser.add_argument('--select', type=parse_select_rows, help='Auswahl einzelner oder mehrerer Zeilen und Bereiche 1,3-5,7 (1-basierte Indizes)')
+    parser.add_argument('-n', '--no-headers', action='store_true', help='CSV enthält keine Spaltenüberschriften; Daten beginnen ab der ersten Zeile')
 
     args = parser.parse_args()
 
-    render_templates(args.template, args.csvfile, args.output_dir, override_headers=args.headers, select_rows=args.select)
+    render_templates(args.template, args.csvfile, args.output_dir, override_headers=args.headers, select_rows=args.select, no_headers=args.no_headers)
 
 if __name__ == '__main__':
     main()
-

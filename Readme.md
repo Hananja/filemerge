@@ -56,6 +56,15 @@ filemerge template.html daten.csv briefe/ --headers Name,Email,Firma,Adresse
 filemerge template.txt data.csv output/ --select 1,3-5,7
 ```
 
+#### CSV ohne Header, automatische Spaltennamen (col_1, col_2, ...)
+filemerge template.txt daten.csv output/ --no-headers
+
+#### CSV ohne Header, aber mit eigenen Spaltennamen
+filemerge template.txt daten.csv output/ --no-headers --headers Name,Email,Telefon
+
+#### Kombination mit Zeilenauswahl
+filemerge template.txt daten.csv output/ --no-headers --select 1-5
+
 ### Template-Beispiel
 
 **brief_template.txt:**
