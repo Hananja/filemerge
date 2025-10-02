@@ -65,6 +65,18 @@ filemerge template.txt daten.csv output/ --no-headers --headers Name,Email,Telef
 #### Kombination mit Zeilenauswahl
 filemerge template.txt daten.csv output/ --no-headers --select 1-5
 
+#### Dateinamen aus Name-Spalte generieren
+filemerge template.txt kontakte.csv output/ -t "{{ Name }}.txt"
+
+#### Kombiniert mehrere Felder
+filemerge template.txt daten.csv output/ -t "{{ Firma }}_{{ Name }}_{{ Datum }}.html"
+
+#### Mit Unterordnern (falls Betriebssystem unterstützt)
+filemerge template.txt daten.csv output/ -t "{{ Kategorie }}/{{ Name }}.txt"
+
+#### Fallback auf Standard wenn Template-Fehler auftreten
+filemerge template.txt daten.csv output/ -t "{{ UngueltigesSpalte }}.txt"
+
 ### Template-Beispiel
 
 **brief_template.txt:**
