@@ -57,25 +57,39 @@ filemerge template.txt data.csv output/ --select 1,3-5,7
 ```
 
 #### CSV ohne Header, automatische Spaltennamen (col_1, col_2, ...)
+```bash
 filemerge template.txt daten.csv output/ --no-headers
+```
 
 #### CSV ohne Header, aber mit eigenen Spaltennamen
+```bash
 filemerge template.txt daten.csv output/ --no-headers --headers Name,Email,Telefon
+```
 
 #### Kombination mit Zeilenauswahl
+```bash
 filemerge template.txt daten.csv output/ --no-headers --select 1-5
+```
 
 #### Dateinamen aus Name-Spalte generieren
+```bash
 filemerge template.txt kontakte.csv output/ -t "{{ Name }}.txt"
+```
 
 #### Kombiniert mehrere Felder
+```bash
 filemerge template.txt daten.csv output/ -t "{{ Firma }}_{{ Name }}_{{ Datum }}.html"
+```
 
 #### Mit Unterordnern (falls Betriebssystem unterstützt)
+```bash
 filemerge template.txt daten.csv output/ -t "{{ Kategorie }}/{{ Name }}.txt"
+```
 
 #### Fallback auf Standard wenn Template-Fehler auftreten
+```bash
 filemerge template.txt daten.csv output/ -t "{{ UngueltigesSpalte }}.txt"
+```
 
 ### Template-Beispiel
 
