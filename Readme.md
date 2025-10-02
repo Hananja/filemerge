@@ -16,16 +16,6 @@ Ein leistungsstarker Seriendokumentgenerator, der Jinja2-Templates mit CSV-Daten
 
 ## 📦 Installation
 
-### Mit pipx (empfohlen)
-```bash
-pipx install filemerge
-```
-
-### Mit pip
-```bash
-pip install filemerge
-```
-
 ### Aus dem Repository
 ```bash
 pipx install git+https://github.com/Hananja/filemerge.git
