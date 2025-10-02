@@ -80,20 +80,30 @@ filemerge template.txt daten.csv output/ -t "{{ Kategorie }}/{{ Name }}.txt"
 ```bash
 filemerge template.txt daten.csv output/ -t "{{ UngueltigesSpalte }}.txt"
 ```
-# Standard CSV mit Komma
+#### Standard CSV mit Komma
+```bash
 filemerge template.txt data.csv output/
+```
 
-# Semikolon-getrennte Datei (häufig in Europa)
+#### Semikolon-getrennte Datei (häufig in Europa)
+```bash
 filemerge template.txt data.csv output/ -d ";"
+```
 
-# Tab-getrennte Datei (TSV)
+#### Tab-getrennte Datei (TSV)
+```bash
 filemerge template.txt data.tsv output/ --delimiter "\\t"
+```
 
-# Pipe-getrennte Datei
+#### Pipe-getrennte Datei
+```bash
 filemerge template.txt data.txt output/ -d "|"
+```
 
-# Kombination mit anderen Optionen
+#### Kombination mit anderen Optionen
+```bash
 filemerge template.txt data.csv output/ -d ";" -t "{{ Name }}.html" --no-headers
+```
 
 ### Template-Beispiel
 
@@ -125,11 +135,30 @@ Anna Schmidt,anna@test.de,Test AG,+49987654321
 
 ## 📋 Kommandozeilen-Optionen
 
-| Option | Beschreibung | Beispiel |
-|--------|--------------|----------|
-| `--headers` | Überschreibt CSV-Spaltenüberschriften | `--headers Name,Email,Firma` |
-| `--select` | Wählt spezifische Zeilen aus (1-basiert) | `--select 1,3-5,7` |
-| `--help` | Zeigt Hilfe an | `--help` |
+```
+usage: filemerge [-h] [--headers HEADERS] [--select SELECT] [-n] [-t FILE_TEMPLATE] [-d DELIMITER]
+                 template csvfile output_dir
+
+Seriendokumentgenerator: Erstelle Dokumente aus Jinja-Templates und CSV-Daten.
+
+positional arguments:
+  template              Pfad zur Jinja-Template-Datei
+  csvfile               Pfad zur CSV-Datei
+  output_dir            Ausgabeordner für generierte Dateien
+
+options:
+  -h, --help            show this help message and exit
+  --headers HEADERS     Überschreibe CSV-Spaltenüberschriften; kommasepariert z.B.
+                        Name,Adresse,Telefon
+  --select SELECT       Auswahl einzelner oder mehrerer Zeilen und Bereiche 1,3-5,7 (1-basierte
+                        Indizes)
+  -n, --no-headers      CSV enthält keine Spaltenüberschriften; Daten beginnen ab der ersten Zeile
+  -t, --file-template FILE_TEMPLATE
+                        Jinja-Template für Dateinamen, z.B. "{{ Name }}_{{ Datum }}.txt"
+  -d, --delimiter DELIMITER
+                        CSV-Trennzeichen (Standard: Komma). Für Tab verwenden Sie "\t"
+
+```
 
 ### Zeilen-Auswahl im Detail
 
@@ -141,4 +170,3 @@ Die `--select` Option unterstützt:
 ## 🎯 Anwendungsfälle
 
 - Serienbriefe mit LaTeX oder anderen textbasierten Systemen
-### 📧
