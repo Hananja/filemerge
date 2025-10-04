@@ -51,7 +51,7 @@ def sanitize_filename(filename):
         filename = 'unnamed'
     return filename
 
-def render_templates(template_path, csv_path, output_path, override_headers=None, select_rows=None, no_headers=False, file_template=None, delimiter=',', join_output=False):
+def render_templates(template_path, csv_path, output_path, override_headers=None, select_rows=None, no_headers=False, file_template=None, delimiter=',', join_output=False, chunk_output=False):
     template_dir = os.path.dirname(template_path) or '.'
     template_file = os.path.basename(template_path)
 
@@ -65,7 +65,22 @@ def render_templates(template_path, csv_path, output_path, override_headers=None
 
     data = read_csv(csv_path, override_headers=override_headers, select_rows=select_rows, no_headers=no_headers, delimiter=delimiter)
 
-    if join_output:
+    if chunk_output:
+        # Chunk-Modus: Gesamte CSV-Datei als Liste an Template übergeben
+        # Erstelle das Verzeichnis für die Ausgabedatei, falls nötig
+        output_dir = os.path.dirname(output_path)
+        if output_dir:
+            os.makedirs(output_dir, exist_ok=True)
+        
+        # Template mit der gesamten CSV-Datei als 'csv' Variable rendern
+        context = {'csv': data}
+        output_content = template.render(context)
+        
+        with open(output_path, 'w', encoding='utf-8') as output_file:
+            output_file.write(output_content)
+        
+        print(f"Chunk-Datei erstellt: {output_path}")
+    elif join_output:
         # Join-Modus: Alle Ausgaben in eine Datei schreiben
         # Erstelle das Verzeichnis für die Ausgabedatei, falls nötig
         output_dir = os.path.dirname(output_path)
@@ -152,15 +167,20 @@ def main():
         description="Seriendokumentgenerator: Erstelle Dokumente aus Jinja-Templates und CSV-Daten.")
     parser.add_argument('template', help='Pfad zur Jinja-Template-Datei')
     parser.add_argument('csvfile', help='Pfad zur CSV-Datei')
-    parser.add_argument('output', help='Ausgabeordner für generierte Dateien oder Dateiname bei --join')
+    parser.add_argument('output', help='Ausgabeordner für generierte Dateien oder Dateiname bei --join/--chunk')
     parser.add_argument('--headers', type=parse_headers, help='Überschreibe CSV-Spaltenüberschriften; kommasepariert z.B. Name,Adresse,Telefon')
-    parser.add_argument('-s', '--select', type=parse_select_rows, help='Auswahl einzelner oder mehrerer Zeilen und Bereiche 1,3-5,7 (1-basierte Indizes)')
+    parser.add_argument('--select', type=parse_select_rows, help='Auswahl einzelner oder mehrerer Zeilen und Bereiche 1,3-5,7 (1-basierte Indizes)')
     parser.add_argument('-n', '--no-headers', action='store_true', help='CSV enthält keine Spaltenüberschriften; Daten beginnen ab der ersten Zeile')
     parser.add_argument('-t', '--file-template', help='Jinja-Template für Dateinamen, z.B. "{{ Name }}_{{ Datum }}.txt"')
     parser.add_argument('-d', '--delimiter', default=',', help='CSV-Trennzeichen (Standard: Komma). Für Tab verwenden Sie "\\t"')
     parser.add_argument('-j', '--join', action='store_true', help='Konkateniere alle Ausgaben in einer einzigen Datei statt separate Dateien zu erstellen')
+    parser.add_argument('-c', '--chunk', action='store_true', help='Erstelle eine Datei mit der gesamten CSV-Datei als Liste in der Template-Variable "csv"')
 
     args = parser.parse_args()
+
+    # Validierung: --join und --chunk schließen sich gegenseitig aus
+    if args.join and args.chunk:
+        parser.error("--join und --chunk können nicht gleichzeitig verwendet werden")
 
     # Erlaube spezielle Zeichen-Notationen
     delimiter = args.delimiter
@@ -174,7 +194,7 @@ def main():
     render_templates(args.template, args.csvfile, args.output,
                      override_headers=args.headers, select_rows=args.select,
                      no_headers=args.no_headers, file_template=args.file_template,
-                     delimiter=delimiter, join_output=args.join)
+                     delimiter=delimiter, join_output=args.join, chunk_output=args.chunk)
 
 if __name__ == '__main__':
     main()

@@ -53,18 +53,22 @@ class TestFilemergeIntegration(unittest.TestCase):
 
         # Prüfen, ob Ausgabe erzeugt wurde
         output_files = sorted(f for f in os.listdir(self.output_dir) if f.endswith(".txt"))
-        self.assertEqual(2, len(output_files) )
+        self.assertEqual(3, len(output_files) )
 
         # Inhalt der erzeugten Datei prüfen
         with open(os.path.join(self.output_dir, output_files[0]), encoding="utf-8") as f:
             content1 = f.read()
         with open(os.path.join(self.output_dir, output_files[1]), encoding="utf-8") as f:
             content2 = f.read()
+        with open(os.path.join(self.output_dir, output_files[2]), encoding="utf-8") as f:
+            content3 = f.read()
 
         self.assertIn("Name: Alice", content1)
         self.assertIn("Stadt: Berlin", content1)
-        self.assertIn("Name: Charlie", content2)
-        self.assertIn("Stadt: München", content2)
+        self.assertIn("Name: Bob", content2)
+        self.assertIn("Stadt: Hamburg", content2)
+        self.assertIn("Name: Charlie", content3)
+        self.assertIn("Stadt: München", content3)
 
 if __name__ == "__main__":
     unittest.main()
