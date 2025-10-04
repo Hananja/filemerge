@@ -102,6 +102,7 @@ def render_templates(template_path, csv_path, output_path, override_headers=None
         os.makedirs(output_dir, exist_ok=True)
 
         for i, context in enumerate(data, 1):
+            context['_index'] = i  # Füge Index zur Verfügung
             output_content = template.render(context)
 
             # Dateinamen generieren

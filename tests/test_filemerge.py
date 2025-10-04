@@ -22,6 +22,11 @@ class TestFilemergeIntegration(unittest.TestCase):
         with open(self.template_path, "w", encoding="utf-8") as f:
             f.write("Name: {{ Name }}\nAlter: {{ Alter }}\nStadt: {{ Stadt }}\n\n")
 
+        # Beispiel-Jinja2-Template für Chunk-Modus
+        self.chunk_template_path = os.path.join(self.test_dir.name, "chunk_template.txt")
+        with open(self.chunk_template_path, "w", encoding="utf-8") as f:
+            f.write("{% for person in csv %}Name: {{ person.Name }}\nStadt: {{ person.Stadt }}\n\n{% endfor %}")
+
         # Beispiel-CSV-Datei
         self.csv_path = os.path.join(self.test_dir.name, "data.csv")
         with open(self.csv_path, "w", encoding="utf-8", newline='') as f:
@@ -30,6 +35,41 @@ class TestFilemergeIntegration(unittest.TestCase):
     def tearDown(self):
         self.test_dir.cleanup()
         pass
+
+    def test_cli_chunk_mode(self):
+        # Kommandozeilenaufruf des Scripts (seriendokument.py muss im selben Ordner liegen)
+        test_args = [
+            "main.py",     # Skriptname
+            self.chunk_template_path,
+            self.csv_path,
+            os.path.join(self.output_dir, "chunk_output.txt"),
+            "--chunk"
+        ]
+
+        # Skript ausführen
+        # result = subprocess.run(cmd, capture_output=True, text=True)
+        # self.assertEqual(0, result.returncode, msg=f"Fehler: {result.stderr}")
+
+        # Mock argv
+        with mock.patch.object(sys, 'argv', test_args):
+            # main() führt den kompletten Ablauf durch, inkl. Argumenten parsen und Dokumente generieren
+            filemerge.main.cli()
+
+        # Prüfen, ob Ausgabe erzeugt wurde
+        output_files = sorted(f for f in os.listdir(self.output_dir) if f.endswith(".txt"))
+        self.assertEqual(1, len(output_files) )
+        self.assertEqual("chunk_output.txt", output_files[0])
+
+        # Inhalt der erzeugten Datei prüfen
+        with open(os.path.join(self.output_dir, output_files[0]), encoding="utf-8") as f:
+            content = f.read()
+
+        self.assertIn("Name: Alice", content)
+        self.assertIn("Stadt: Berlin", content)
+        self.assertIn("Name: Bob", content)
+        self.assertIn("Stadt: Hamburg", content)
+        self.assertIn("Name: Charlie", content)
+        self.assertIn("Stadt: München", content)
 
     def test_cli_generate_documents(self):
         # Kommandozeilenaufruf des Scripts (seriendokument.py muss im selben Ordner liegen)
