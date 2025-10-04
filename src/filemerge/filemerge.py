@@ -51,7 +51,7 @@ def sanitize_filename(filename):
         filename = 'unnamed'
     return filename
 
-def render_templates(template_path, csv_path, output_dir, override_headers=None, select_rows=None, no_headers=False, file_template=None, delimiter=','):
+def render_templates(template_path, csv_path, output_path, override_headers=None, select_rows=None, no_headers=False, file_template=None, delimiter=',', join_output=False):
     template_dir = os.path.dirname(template_path) or '.'
     template_file = os.path.basename(template_path)
 
@@ -65,41 +65,60 @@ def render_templates(template_path, csv_path, output_dir, override_headers=None,
 
     data = read_csv(csv_path, override_headers=override_headers, select_rows=select_rows, no_headers=no_headers, delimiter=delimiter)
 
-    os.makedirs(output_dir, exist_ok=True)
+    if join_output:
+        # Join-Modus: Alle Ausgaben in eine Datei schreiben
+        # Erstelle das Verzeichnis für die Ausgabedatei, falls nötig
+        output_dir = os.path.dirname(output_path)
+        if output_dir:
+            os.makedirs(output_dir, exist_ok=True)
+        
+        with open(output_path, 'w', encoding='utf-8') as output_file:
+            for i, context in enumerate(data, 1):
+                output_content = template.render(context)
+                output_file.write(output_content)
+                # Füge Trennzeichen zwischen den Ausgaben hinzu (außer nach der letzten)
+                if i < len(data):
+                    output_file.write('\n')  # Oder ein anderes Trennzeichen nach Bedarf
+        
+        print(f"Zusammengefasste Datei erstellt: {output_path}")
+    else:
+        # Standard-Modus: Separate Dateien erstellen
+        output_dir = output_path
+        os.makedirs(output_dir, exist_ok=True)
 
-    for i, context in enumerate(data, 1):
-        output_content = template.render(context)
+        for i, context in enumerate(data, 1):
+            output_content = template.render(context)
 
-        # Dateinamen generieren
-        if filename_template:
-            try:
-                filename = filename_template.render(context)
-                filename = sanitize_filename(filename)
-                # Falls der gerenderte Dateiname leer ist, Fallback verwenden
-                if not filename:
+            # Dateinamen generieren
+            if filename_template:
+                try:
+                    filename = filename_template.render(context)
+                    filename = sanitize_filename(filename)
+                    # Falls der gerenderte Dateiname leer ist, Fallback verwenden
+                    if not filename:
+                        filename = f"output_{i}.txt"
+                    # Dateiendung hinzufügen, falls nicht vorhanden
+                    elif '.' not in filename:
+                        filename += '.txt'
+                except Exception as e:
+                    print(f"Warnung: Fehler beim Generieren des Dateinamens für Zeile {i}: {e}")
                     filename = f"output_{i}.txt"
-                # Dateiendung hinzufügen, falls nicht vorhanden
-                elif '.' not in filename:
-                    filename += '.txt'
-            except Exception as e:
-                print(f"Warnung: Fehler beim Generieren des Dateinamens für Zeile {i}: {e}")
+            else:
                 filename = f"output_{i}.txt"
-        else:
-            filename = f"output_{i}.txt"
 
-        output_file = os.path.join(output_dir, filename)
+            output_file = os.path.join(output_dir, filename)
 
-        # Prüfe auf Dateinamenskonflikte und füge Suffix hinzu falls nötig
-        counter = 1
-        original_output_file = output_file
-        while os.path.exists(output_file):
-            name, ext = os.path.splitext(original_output_file)
-            output_file = f"{name}_{counter}{ext}"
-            counter += 1
+            # Prüfe auf Dateinamenskonflikte und füge Suffix hinzu falls nötig
+            counter = 1
+            original_output_file = output_file
+            while os.path.exists(output_file):
+                name, ext = os.path.splitext(original_output_file)
+                output_file = f"{name}_{counter}{ext}"
+                counter += 1
 
-        with open(output_file, 'w', encoding='utf-8') as f:
-            f.write(output_content)
-        print(f"Datei erstellt: {output_file}")
+            with open(output_file, 'w', encoding='utf-8') as f:
+                f.write(output_content)
+            print(f"Datei erstellt: {output_file}")
 
 def parse_headers(arg):
     # Kommaseparierte Header, z.B. Name,Adresse,Telefon
@@ -133,12 +152,13 @@ def main():
         description="Seriendokumentgenerator: Erstelle Dokumente aus Jinja-Templates und CSV-Daten.")
     parser.add_argument('template', help='Pfad zur Jinja-Template-Datei')
     parser.add_argument('csvfile', help='Pfad zur CSV-Datei')
-    parser.add_argument('output_dir', help='Ausgabeordner für generierte Dateien')
+    parser.add_argument('output', help='Ausgabeordner für generierte Dateien oder Dateiname bei --join')
     parser.add_argument('--headers', type=parse_headers, help='Überschreibe CSV-Spaltenüberschriften; kommasepariert z.B. Name,Adresse,Telefon')
-    parser.add_argument('--select', type=parse_select_rows, help='Auswahl einzelner oder mehrerer Zeilen und Bereiche 1,3-5,7 (1-basierte Indizes)')
+    parser.add_argument('-s', '--select', type=parse_select_rows, help='Auswahl einzelner oder mehrerer Zeilen und Bereiche 1,3-5,7 (1-basierte Indizes)')
     parser.add_argument('-n', '--no-headers', action='store_true', help='CSV enthält keine Spaltenüberschriften; Daten beginnen ab der ersten Zeile')
     parser.add_argument('-t', '--file-template', help='Jinja-Template für Dateinamen, z.B. "{{ Name }}_{{ Datum }}.txt"')
     parser.add_argument('-d', '--delimiter', default=',', help='CSV-Trennzeichen (Standard: Komma). Für Tab verwenden Sie "\\t"')
+    parser.add_argument('-j', '--join', action='store_true', help='Konkateniere alle Ausgaben in einer einzigen Datei statt separate Dateien zu erstellen')
 
     args = parser.parse_args()
 
@@ -151,10 +171,10 @@ def main():
     elif delimiter == '\\r':
         delimiter = '\r'
 
-    render_templates(args.template, args.csvfile, args.output_dir,
+    render_templates(args.template, args.csvfile, args.output,
                      override_headers=args.headers, select_rows=args.select,
                      no_headers=args.no_headers, file_template=args.file_template,
-                     delimiter=delimiter)
+                     delimiter=delimiter, join_output=args.join)
 
 if __name__ == '__main__':
     main()
